@@ -119,8 +119,18 @@ gcc -Wp,-MD, abc.dep -c -o main.o main.c
 列出头文件目录、库目录
 echo 'main(){}' | gcc -E -v -
 
+打印出依赖
+gcc -M c.c
+
+把依赖写入文件c.d
+gcc -M -MF c.d c.c
+
+编译c.o,把依赖写入文件c.d
+gcc -c -o c.o c.c -MD -MF c.d
 
 --------------------
+
+
 
 --------------------
 

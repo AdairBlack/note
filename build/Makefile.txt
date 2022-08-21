@@ -1,0 +1,186 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2022-08-21T14:53:39+08:00
+
+====== Makefile ======
+Created 星期日 21 八月 2022
+
+--------------------
+
+=== 规则 ===
+
+若无目标，默认第一个目标
+
+--------------------
+
+=== 常用变量 ===
+%.o：表示所有的.o文件
+
+%.c：表示所有的.c文件
+
+$@：表示目标
+
+$<：表示第1个依赖文件
+
+$^：表示所有依赖文件
+
+{{{code: lang="makefile" linenumbers="True"
+test: a.o b.o 
+	gcc -o test $^
+	
+%.o : %.c
+	gcc -c -o $@ $<
+}}}
+
+
+--------------------
+
+=== 假想目标 ===
+
+如果某目标同名文件存在，则目标无法执行。
+需定义假想目标
+
+.PHONY
+
+{{{code: lang="makefile" linenumbers="True"
+clean:
+	rm *.o test
+
+.PHONY : clean
+}}}
+
+
+--------------------
+
+=== 变量分类 ===
+
+即时变量（简单变量）
+A := xxx
+
+延时变量
+B = xxx
+
+延时变量，第一次定义才启用
+?=
+
+附加，即时还是延时取决于前面的定义
++=
+
+执行make时，会先分析整个makefile文件，所以对于延时变量，其所依赖的变量在前后赋值都可以
+--------------------
+
+=== 常用函数 ===
+
+$(foreach var, list, text)
+对list中每个变量执行text
+{{{code: lang="makefile" linenumbers="True"
+A = a b c
+B = $(foreach f, ${A}, ${f}.o)
+
+all:
+	echo B = ${B}
+}}}
+
+
+$(filter pattern..., text)
+$(filter-out pattern..., text)
+在text取出符合/不符合pattern格式的值
+{{{code: lang="makefile" linenumbers="True"
+C = a b c d/
+
+D = $(filter %/, ${C})
+E = $(filter-out %/, ${C})
+
+all:
+	echo C = $(C)
+	echo D = $(D) 
+	echo E = $(E) 
+}}}
+
+
+$(wildcard pattern)
+pattern定义了文件名的格式
+wildcard取出其中存在（当前路径下存在）的文件
+{{{code: lang="makefile" linenumbers="True"
+files = $(wildcard *.c)
+
+files2 = a.c b.c c.c d.c e.c
+files3 = $(wildcard $(files2))
+
+all:
+	echo files = ${files}
+	echo files3 = $(files3)
+}}}
+
+
+$(patsubstr pattern, replacement, text)
+text中符合patter的替换为replacement
+{{{code: lang="makefile" linenumbers="True"
+files2 = a.c b.c c.c d.c e.c abc
+
+dep_files = $(patsubstr %.c, %.d, files2)
+
+all:
+	echo dep_files = ${dep_files}
+}}}
+
+
+--------------------
+
+=== .h依赖文件 ===
+
+gcc -c -o c.o c.c -MD -MF c.d
+
+{{{code: lang="makefile" linenumbers="True"
+objs = a.o b.o c.o
+
+dep_files := $(patsubstr %, .%.5, $(objs))
+dep_files := $(wildcard $(dep_files))
+
+test: $(objs)
+	gcc -o test $^
+	
+ifneq (${dep_file},)
+include ${dep_files}
+endif
+
+%.o : %.c
+	gcc -c -o $@ $^ -MD -MF .$@.d
+
+clean:
+	rm *.o test
+
+distclean:
+	rm ${dep_files}
+
+.PHONY : clean
+}}}
+
+
+include
+如果Makefile中有以file.dep为目标的规则，make会先使用规则对file.dep文件进行更新，然后将更新后的file.dep文件包含进当前Makefile文件。
+
+--------------------
+
+=== CFLAGS ===
+
+把所有警告当错误
+CFLAGS = -Werror
+
+--------------------
+
+=== general makefile解析 ===
+
+
+
+--------------------
+ 
+
+--------------------
+
+--------------------
+
+--------------------
+
+--------------------
+
