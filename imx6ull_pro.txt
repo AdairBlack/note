@@ -1,0 +1,99 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2022-04-16T22:48:28+08:00
+
+====== imx6ull pro ======
+Created 星期六 16 四月 2022
+--------------------
+
+=== NFS挂载 ===
+
+在开发板执行
+mount -t nfs -o nolock,vers=3 192.168.0.8:/home/book/nfs_rootfs /mnt
+
+cp ./test /home/book/nfs_rootfs/
+--------------------
+
+=== 更新教学代码 ===
+
+在 100ask_imx6ull-sdk下执行
+../repo/repo sync -j8
+
+--------------------
+
+=== 编译 ===
+arm-buildroot-linux-gnueabihf-gcc -o hello hello.c
+
+=== 镜像 ===
+cd ~/100ask_imx6ull-sdk/Buildroot_2020.02.x
+make clean
+make 100ask_imx6ull_pro_ddr512m_systemV_qt5_defconfig
+make all
+cd ~/100ask_imx6ull-sdk/Buildroot_2020.02.x/output
+cd ~/100ask_imx6ull-sdk/Buildroot_2020.02.x/output/images
+
+=== kernel镜像 ===
+cd ~/100ask_imx6ull-sdk/Linux-4.9.88
+make mrproper
+make 100ask_imx6ull_defconfig
+make zImage  -j6
+make dtbs
+cp arch/arm/boot/zImage ~/nfs_rootfs
+cp arch/arm/boot/dts/100ask_imx6ull-14x14.dtb  ~/nfs_rootfs
+
+=== kernel模块 ===
+cd ~/100ask_imx6ull-sdk/Linux-4.9.88
+make ARCH=arm CROSS_COMPILE=arm-buildroot-linux-gnueabihf- modules
+cd ~/100ask_imx6ull-sdk/Linux-4.9.88/drivers
+
+=== 安装kernel模块 ===
+cd ~/100ask_imx6ull-sdk/Linux-4.9.88/
+sudo make  ARCH=arm INSTALL_MOD_PATH=/home/book/nfs_rootfs  modules_install
+
+=== 更新开发板 ===
+mount -t nfs -o nolock,vers=3 192.168.0.8:/home/book/nfs_rootfs /mnt
+cp  /mnt/zImage  /boot
+cp  /mnt/*.dtb   /boot
+cp  /mnt/lib/modules  /lib  -rfd
+
+=== 编译u-boot ===
+cd ~/100ask_imx6ull-sdk/Uboot-2017.03
+make distclean
+make  mx6ull_14x14_evk_defconfig
+make
+cp ~/100ask_imx6ull-sdk/Uboot-2017.03/u-boot-dtb.imx ~/nfs_rootfs
+
+mount -t nfs -o nolock,vers=3 192.168.0.8:/home/book/nfs_rootfs /mnt
+cp /mnt/u-boot-dtb.imx .
+
+echo 0 > /sys/block/mmcblk1boot0/force_ro     
+dd if=u-boot-dtb.imx of=/dev/mmcblk1boot0 bs=512 seek=2 
+echo 1 > /sys/block/mmcblk1boot0/force_ro  
+
+整体镜像
+~\100ask_imx6ull-sdk\Buildroot_2020.02.x\output\images\100ask-imx6ull-pro-512d-systemv-v1.img
+
+--------------------
+
+
+=== 环境变量 ===
+export ARCH=arm
+export CROSS_COMPILE=arm-buildroot-linux-gnueabihf-
+export PATH=$PATH:/home/book/100ask_imx6ull-sdk/ToolChain/arm-buildroot-linux-gnueabihf_sdk-buildroot/bin
+
+--------------------
+
+=== app ===
+~/01_all_series_quickstart/04_嵌入式Linux应用开发基础知识/source/
+--------------------
+
+=== 查看文件格式 ===
+
+file hello
+
+--------------------
+
+
+--------------------
+
+

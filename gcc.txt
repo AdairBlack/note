@@ -1,0 +1,140 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2022-08-21T14:41:56+08:00
+
+====== gcc ======
+Created 星期日 21 八月 2022
+
+--------------------
+
+=== 预处理 ===
+gcc -E -o hello.i hello.c
+
+=== 编译 ===
+gcc -S -o hello.s hello.i
+
+=== 汇编 ===
+gcc -c -o hello.o hello.s
+
+=== 链接 ===
+gcc -o hello hello.o
+
+--------------------
+
+=== 预处理、编译 ===
+cc1 
+
+=== 汇编 ===
+as
+
+=== 链接 ===
+collect2
+
+--------------------
+
+=== 常用选项 ===
+-E 预处理
+-c 预处理、编译、汇编
+-o 输出指定文件
+-I 指定头文件目录
+-L 指定链接时库文件目录
+-l 指定链接哪一个库文件
+
+
+--------------------
+
+=== 静态库 ===
+
+将.o打包
+ar rcs [静态库的名字(libxxx.a)] [原材料(*.o)]
+
+使用时
+1.头文件
+2.静态库
+
+--------------------
+
+=== 动态库 ===
+gcc -fPIC -c test.c
+gcc -shared -o libtest.so test.o
+gcc test.c -fPIC -shared -o libtest.so
+
+=== 隐式链接 ===
+gcc main.c -L. -ltest -o test
+readelf test -d 查看生成的文件 有依赖
+nm -D test 查看有add符号，未定义的
+
+指定运行时动态库
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/a
+
+
+=== 显式链接 ===
+gcc dyn_main.c ldl -o dyn_test
+readelf dyn_test -d 不依赖
+nm -D dyn_test 没有add
+
+#include <stdio.h>
+#include <dlfcn.h>
+{{{code: lang="c" linenumbers="True"
+#include <stdio.h>
+#include <dlfcn.h>
+
+int main(int argc, char *argv[])
+{
+	void *dl = NULL;
+	int (*add)(int a, int b);
+	dl = dlopen( "./libtest.so", RTLD_LAZY);
+	if( dl == NULL )
+	{
+		printf("so loading error.\n");
+		return 1;
+	}
+	add = (int(*)(int, int))dlsym(dl, "add");
+	if( dlerror() != NULL )
+	{
+		printf("fun load error.\n");
+		return 1;
+	}
+	printf("%d\n", add(1, 2));
+	return 0;
+}
+}}}
+
+
+运行程序时不用指定LD_LIBRARY_PATH
+
+--------------------
+
+=== 常用选项 ===
+
+查看预处理结果，头文件是哪个
+gcc -E main.c
+
+把所有的宏展开
+gcc -E -dM main.c
+
+生成依赖文件abc.dep
+gcc -Wp,-MD, abc.dep -c -o main.o main.c
+
+列出头文件目录、库目录
+echo 'main(){}' | gcc -E -v -
+
+
+--------------------
+
+--------------------
+
+--------------------
+
+--------------------
+
+--------------------
+
+--------------------
+
+
+--------------------
+
+--------------------
+
+
